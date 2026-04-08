@@ -3,3 +3,8 @@ bin/
 obj/
 *.user
 *.suo
+# Mac
+.DS_Store
+
+# Visual Studio
+.vs/
