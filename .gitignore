@@ -1,0 +1,17 @@
+# Mac
+.DS_Store
+
+# Node
+node_modules
+.next
+
+# Visual Studio
+.vs/
+backend/.vs/
+
+# Build
+bin/
+obj/
+
+# Env
+.env
