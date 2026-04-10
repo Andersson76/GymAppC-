@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api";
+import { LoginRequest, LoginResponse } from "@/types/auth";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LoginRequest>({
     email: "",
     password: "",
   });
@@ -33,24 +35,15 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      const response = await fetch("https://localhost:xxxx/api/auth/login", {
+      const data = await apiFetch<LoginResponse>("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(formData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Inloggning misslyckades");
-      }
 
       localStorage.setItem("token", data.token);
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Något gick fel");
+      setError(err instanceof Error ? err.message : "Inloggning misslyckades.");
     } finally {
       setLoading(false);
     }
