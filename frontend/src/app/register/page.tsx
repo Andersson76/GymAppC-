@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api";
+import type { RegisterRequest } from "@/types/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterRequest>({
     name: "",
     email: "",
     password: "",
@@ -41,26 +43,19 @@ export default function RegisterPage() {
     try {
       setLoading(true);
 
-      const response = await fetch("https://localhost:xxxx/api/auth/register", {
+       await apiFetch("/api/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registrering misslyckades");
-      }
 
       setSuccess("Kontot skapades! Du skickas till login.");
+
       setTimeout(() => {
         router.push("/login");
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Något gick fel");
+      setError(err instanceof Error ? err.message : "Registrering misslyckades.");
     } finally {
       setLoading(false);
     }
