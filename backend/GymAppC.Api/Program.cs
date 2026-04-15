@@ -44,6 +44,12 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
 
 if (app.Environment.IsDevelopment())
