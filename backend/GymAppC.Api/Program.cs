@@ -1,4 +1,4 @@
-using GymAppC.Api.Data;
+using GymAppC.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;

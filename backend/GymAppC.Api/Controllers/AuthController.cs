@@ -1,6 +1,6 @@
-﻿using GymAppC.Api.Data;
+﻿using GymAppC.Infrastructure.Data;
 using GymAppC.Api.Dtos;
-using GymAppC.Api.Models;
+using GymAppC.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
