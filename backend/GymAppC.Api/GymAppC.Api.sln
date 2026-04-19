@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GymAppC.Api", "GymAppC.Api.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GymAppC.Domain", "..\GymAppC.Domain\GymAppC.Domain.csproj", "{5C525217-14AC-4F59-A5C5-EF14A89A2395}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GymApp.Application", "..\GymApp.Application\GymApp.Application.csproj", "{E75D33B9-26C6-4BE3-9DE3-E44D25EC5751}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GymAppC.Application", "..\GymApp.Application\GymAppC.Application.csproj", "{E75D33B9-26C6-4BE3-9DE3-E44D25EC5751}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GymAppC.Infrastructure", "..\GymAppC.Infrastructure\GymAppC.Infrastructure.csproj", "{25EB0AFF-5EEB-402B-96C9-8DF999608712}"
 EndProject
