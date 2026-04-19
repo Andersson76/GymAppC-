@@ -1,6 +1,8 @@
-﻿using GymAppC.Infrastructure.Data;
-using GymAppC.Api.Dtos;
+﻿using GymAppC.Application.Dtos;
+using GymAppC.Application.Interfaces;
+using GymAppC.Application.Services;
 using GymAppC.Domain.Entities;
+using GymAppC.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,132 +17,63 @@ namespace GymAppC.Api.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly IAuthService _authService;
 
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        public AuthController(IAuthService authService)
         {
-            _context = context;
-            _configuration = configuration;
+            _authService = authService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
+
             if (!ModelState.IsValid)
+
             {
+
                 return BadRequest(ModelState);
+
             }
 
-            var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+            var result = await _authService.RegisterAsync(dto);
 
-            var emailExists = await _context.Users.AnyAsync(u => u.Email == normalizedEmail);
-            if (emailExists)
+            if (!result.Success)
+
             {
-                return BadRequest(new { message = "Email already exists." });
+
+                return BadRequest(new { message = result.Message });
+
             }
 
-            CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            return Ok(new { message = result.Message });
 
-            var user = new User
-            {
-                Name = dto.Name.Trim(),
-                Email = normalizedEmail,
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "User registered successfully." });
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
+
             if (!ModelState.IsValid)
+
             {
+
                 return BadRequest(ModelState);
+
             }
 
-            var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+            var result = await _authService.LoginAsync(dto);
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+            if (!result.Success || result.Response is null)
 
-            if (user == null)
             {
-                return Unauthorized(new { message = "Fel email eller lösenord." });
+
+                return Unauthorized(new { message = result.Message });
+
             }
 
-            var isPasswordValid = VerifyPasswordHash(dto.Password, user.PasswordHash, user.PasswordSalt);
-            if (!isPasswordValid)
-            {
-                return Unauthorized(new { message = "Fel email eller lösenord." });
-            }
+            return Ok(result.Response);
 
-            var token = CreateToken(user);
-
-            return Ok(new
-            {
-                token,
-                user = new
-                {
-                    user.Id,
-                    user.Name,
-                    user.Email
-                }
-            });
-        }
-
-        private string CreateToken(User user)
-        {
-            var jwtKey = _configuration["Jwt:Key"];
-            var jwtIssuer = _configuration["Jwt:Issuer"];
-            var jwtAudience = _configuration["Jwt:Audience"];
-
-            if (string.IsNullOrWhiteSpace(jwtKey) ||
-                string.IsNullOrWhiteSpace(jwtIssuer) ||
-                string.IsNullOrWhiteSpace(jwtAudience))
-            {
-                throw new InvalidOperationException("JWT settings are missing in appsettings.json.");
-            }
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Email, user.Email)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: jwtIssuer,
-                audience: jwtAudience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
-        {
-            using var hmac = new HMACSHA512();
-            passwordSalt = hmac.Key;
-            passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-        }
-
-        private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
-        {
-            using var hmac = new HMACSHA512(storedSalt);
-            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return computedHash.SequenceEqual(storedHash);
-        }
-
-      
+        }      
     }
 }
