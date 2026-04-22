@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace GymAppC.Api.Controllers
 {
@@ -12,13 +13,14 @@ namespace GymAppC.Api.Controllers
         public IActionResult GetMe()
         {
             var userId = User.FindFirst("id")?.Value;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
             return Ok(new
             {
-
-                message = "Du är inloggad 🎉",
-
-                userId = userId
-
+                id = userId,
+                email,
+                role
             });
         }
     }

@@ -29,47 +29,33 @@ namespace GymAppC.Api.Controllers
         {
 
             if (!ModelState.IsValid)
-
             {
-
                 return BadRequest(ModelState);
-
             }
 
             var result = await _authService.RegisterAsync(dto);
 
             if (!result.Success)
-
             {
-
                 return BadRequest(new { message = result.Message });
-
             }
 
             return Ok(new { message = result.Message });
-
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
-
             if (!ModelState.IsValid)
-
             {
-
                 return BadRequest(ModelState);
-
             }
 
             var result = await _authService.LoginAsync(dto);
 
             if (!result.Success || result.Response is null)
-
             {
-
                 return Unauthorized(new { message = result.Message });
-
             }
 
             return Ok(result.Response);
