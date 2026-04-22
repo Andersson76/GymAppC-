@@ -68,6 +68,7 @@ namespace GymAppC.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteWorkout(int id)
         {
             var userId = GetUserId();
