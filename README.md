@@ -1,4 +1,12 @@
-# 🏋️ GymAppC — Modern Fullstack Application
+## Setup with Docker
+
+1. Kopiera environment-fil:
+   cp .env.example .env
+
+2. Starta projektet:
+   docker compose up --build
+
+   # 🏋️ GymAppC — Modern Fullstack Application
 
 > A scalable fullstack application built with **.NET Web API**, **Next.js**, and **Docker**, following **Clean Architecture principles** and secure **JWT-based authentication**.
 
