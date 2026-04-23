@@ -23,8 +23,8 @@ services:
 
   backend:
     build:
-      context: ./backend/GymAppC.Api
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: GymAppC.Api/Dockerfile
     container_name: gymapp_api
     depends_on:
       database:
