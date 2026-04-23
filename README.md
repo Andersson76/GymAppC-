@@ -151,7 +151,6 @@ This project is designed to be extended with:
 
 * 📊 Workout tracking (CRUD)
 * 🧩 CQRS + MediatR
-* 🔐 Role-based authorization
 * ☁️ Deployment to Azure
 * 📈 Logging & monitoring
 * 🧪 Unit & integration tests
