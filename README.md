@@ -259,7 +259,7 @@ Repositoryt är publikt och har en tydlig historik med mergade pull requests. Br
 ## Författare
 
 Martin Andersson<br>
-Anderssons Webblösningar
+Andersson Webb & System AB
 
 ## Repository
 
