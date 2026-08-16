@@ -1,95 +1,127 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using GymAppC.Application.DTOs.Workouts;
-using GymAppC.Application.Interfaces;
+using GymAppC.Application.Features.Workouts.Commands.CreateWorkout;
+using GymAppC.Application.Features.Workouts.Commands.DeleteWorkout;
+using GymAppC.Application.Features.Workouts.Commands.UpdateWorkout;
+using GymAppC.Application.Features.Workouts.Queries.GetWorkoutById;
+using GymAppC.Application.Features.Workouts.Queries.GetWorkouts;
+using GymAppC.Domain.Constants;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GymAppC.Api.Controllers
+namespace GymAppC.Api.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public sealed class WorkoutsController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class WorkoutsController : ControllerBase
+    private readonly ISender _sender;
+
+    public WorkoutsController(ISender sender)
     {
-        private readonly IWorkoutService _workoutService;
+        _sender = sender;
+    }
 
-        public WorkoutsController(IWorkoutService workoutService)
+    [HttpGet]
+    public async Task<IActionResult> GetMyWorkouts(CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
         {
-            _workoutService = workoutService;
+            return Unauthorized();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetMyWorkouts()
-        {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
+        var workouts = await _sender.Send(
+            new GetWorkoutsQuery(userId.Value),
+            cancellationToken);
 
-            var workouts = await _workoutService.GetAllByUserIdAsync(userId.Value);
-            return Ok(workouts);
+        return Ok(workouts);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetWorkoutById(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetWorkoutById(int id)
+        var workout = await _sender.Send(
+            new GetWorkoutByIdQuery(id, userId.Value),
+            cancellationToken);
+
+        return workout is null ? NotFound() : Ok(workout);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateWorkout(
+        [FromBody] CreateWorkoutDto dto,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
         {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
-
-            var workout = await _workoutService.GetByIdAsync(id, userId.Value);
-
-            if (workout == null)
-                return NotFound();
-
-            return Ok(workout);
+            return Unauthorized();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateWorkout(CreateWorkoutDto dto)
+        var createdWorkout = await _sender.Send(
+            new CreateWorkoutCommand(dto.Title, dto.Date, dto.Notes, userId.Value),
+            cancellationToken);
+
+        return CreatedAtAction(
+            nameof(GetWorkoutById),
+            new { id = createdWorkout.Id },
+            createdWorkout);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateWorkout(
+        int id,
+        [FromBody] UpdateWorkoutDto dto,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
         {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
-
-            var createdWorkout = await _workoutService.CreateAsync(dto, userId.Value);
-
-            return CreatedAtAction(nameof(GetWorkoutById), new { id = createdWorkout.Id }, createdWorkout);
+            return Unauthorized();
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateWorkout(int id, UpdateWorkoutDto dto)
-        {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
+        var updated = await _sender.Send(
+            new UpdateWorkoutCommand(
+                id,
+                dto.Title,
+                dto.Date,
+                dto.Notes,
+                userId.Value),
+            cancellationToken);
 
-            var updated = await _workoutService.UpdateAsync(id, dto, userId.Value);
+        return updated ? NoContent() : NotFound();
+    }
 
-            if (!updated)
-                return NotFound();
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteWorkout(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await _sender.Send(
+            new DeleteWorkoutCommand(id),
+            cancellationToken);
 
-            return NoContent();
-        }
+        return deleted ? NoContent() : NotFound();
+    }
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteWorkout(int id)
-        {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
-
-            var deleted = await _workoutService.DeleteAsync(id, userId.Value);
-
-            if (!deleted)
-                return NotFound();
-
-            return NoContent();
-        }
-
-        private int? GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (int.TryParse(userIdClaim, out var userId))
-                return userId;
-
-            return null;
-        }
+    private int? GetUserId()
+    {
+        return int.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            out var userId)
+            ? userId
+            : null;
     }
 }

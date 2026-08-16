@@ -1,65 +1,57 @@
-﻿using GymAppC.Application.Dtos;
-using GymAppC.Application.Interfaces;
-using GymAppC.Application.Services;
-using GymAppC.Domain.Entities;
-using GymAppC.Infrastructure.Data;
+using GymAppC.Application.Dtos;
+using GymAppC.Application.Features.Auth.Commands.Register;
+using GymAppC.Application.Features.Auth.Queries.Login;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
+using Microsoft.AspNetCore.RateLimiting;
 
-namespace GymAppC.Api.Controllers
+namespace GymAppC.Api.Controllers;
+
+[AllowAnonymous]
+[EnableRateLimiting("authentication")]
+[ApiController]
+[Route("api/[controller]")]
+public sealed class AuthController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    private readonly ISender _sender;
+
+    public AuthController(ISender sender)
     {
-        private readonly IAuthService _authService;
+        _sender = sender;
+    }
 
-        public AuthController(IAuthService authService)
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(
+        [FromBody] RegisterUserDto dto,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(
+            new RegisterUserCommand(dto.Name, dto.Email, dto.Password),
+            cancellationToken);
+
+        if (!result.Succeeded)
         {
-            _authService = authService;
+            return BadRequest(new { message = result.Error });
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
+        return Ok(new { message = result.Value });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginUserDto dto,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(
+            new LoginUserQuery(dto.Email, dto.Password),
+            cancellationToken);
+
+        if (!result.Succeeded || result.Value is null)
         {
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var result = await _authService.RegisterAsync(dto);
-
-            if (!result.Success)
-            {
-                return BadRequest(new { message = result.Message });
-            }
-
-            return Ok(new { message = result.Message });
+            return Unauthorized(new { message = result.Error });
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var result = await _authService.LoginAsync(dto);
-
-            if (!result.Success || result.Response is null)
-            {
-                return Unauthorized(new { message = result.Message });
-            }
-
-            return Ok(result.Response);
-
-        }      
+        return Ok(result.Value);
     }
 }

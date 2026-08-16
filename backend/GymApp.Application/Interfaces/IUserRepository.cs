@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GymAppC.Domain.Entities;
 
-namespace GymAppC.Application.Interfaces
+namespace GymAppC.Application.Interfaces;
+
+public interface IUserRepository : IRepository<User>
 {
-    public interface IUserRepository
-    {
-        Task<User?> GetByEmailAsync (string email);
-        Task<bool> EmailExistsAsync (string email);
-        Task AddAsync(User user);
-        Task SaveChangesAsync();
-    }
+    Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
+    Task<bool> TryAddAsync(User user, CancellationToken cancellationToken = default);
 }

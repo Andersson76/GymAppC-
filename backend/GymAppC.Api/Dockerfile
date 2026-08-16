@@ -2,6 +2,9 @@
 WORKDIR /src
 
 COPY GymAppC.Api/*.csproj GymAppC.Api/
+COPY GymApp.Application/*.csproj GymApp.Application/
+COPY GymAppC.Domain/*.csproj GymAppC.Domain/
+COPY GymAppC.Infrastructure/*.csproj GymAppC.Infrastructure/
 RUN dotnet restore GymAppC.Api/GymAppC.Api.csproj
 
 COPY . .

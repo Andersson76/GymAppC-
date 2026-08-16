@@ -221,12 +221,14 @@ export default function DashboardPage() {
                         </p>
                       </div>
 
-                      <button
-                        onClick={() => handleDelete(w.id)}
-                        className="rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
-                      >
-                        Ta bort
-                      </button>
+                      {user?.role === "Admin" && (
+                        <button
+                          onClick={() => handleDelete(w.id)}
+                          className="rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+                        >
+                          Ta bort
+                        </button>
+                      )}
                     </div>
 
                     {w.notes && (
