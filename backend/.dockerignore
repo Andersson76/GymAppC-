@@ -1,0 +1,7 @@
+**/bin
+**/obj
+**/.vs
+**/._*
+**/*.user
+.git
+.gitignore

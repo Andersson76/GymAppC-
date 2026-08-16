@@ -19,7 +19,7 @@ namespace GymAppC.Application.DTOs.Workouts
 
         public string Title { get; set; } = string.Empty;
 
-        public DateTime Date { get; set; } = DateTime.UtcNow;
+        public DateTime Date { get; set; }
 
         [MaxLength(500)]
 

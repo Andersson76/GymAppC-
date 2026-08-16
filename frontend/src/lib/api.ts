@@ -121,8 +121,9 @@ export async function deleteWorkout(id: number): Promise<void> {
 }
 
 export type CurrentUser = {
-  id: string;
+  id: number;
   email: string;
+  name: string;
   role: string;
 };
 

@@ -1,37 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GymAppC.Application.Interfaces;
 using GymAppC.Domain.Entities;
 using GymAppC.Infrastructure.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace GymAppC.Infrastructure.Repositories
+namespace GymAppC.Infrastructure.Repositories;
+
+public sealed class UserRepository : Repository<User>, IUserRepository
 {
-    public class UserRepository : IUserRepository
+    public UserRepository(AppDbContext context) : base(context)
     {
-        private readonly AppDbContext _context;
-        public UserRepository(AppDbContext context)
+    }
+
+    public Task<User?> GetByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        return Entities.FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
+    }
+
+    public Task<bool> EmailExistsAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        return Entities.AnyAsync(user => user.Email == email, cancellationToken);
+    }
+
+    public async Task<bool> TryAddAsync(
+        User user,
+        CancellationToken cancellationToken = default)
+    {
+        await Entities.AddAsync(user, cancellationToken);
+
+        try
         {
-            _context = context;
+            await Context.SaveChangesAsync(cancellationToken);
+            return true;
         }
-        public async Task<User?> GetByEmailAsync(string email)
+        catch (DbUpdateException exception) when (IsUniqueConstraintViolation(exception))
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            Context.Entry(user).State = EntityState.Detached;
+            return false;
         }
-        public async Task<bool> EmailExistsAsync(string email)
-        {
-            return await _context.Users.AnyAsync(u => u.Email == email);
-        }
-        public async Task AddAsync(User user)
-        {
-            await _context.Users.AddAsync(user);
-        }
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+    }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException exception)
+    {
+        return exception.GetBaseException() is SqlException { Number: 2601 or 2627 };
     }
 }

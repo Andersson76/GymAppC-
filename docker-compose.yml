@@ -5,7 +5,7 @@ services:
     container_name: gymapp_db
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
     ports:
       - "1433:1433"
     volumes:
@@ -32,25 +32,29 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Server=database,1433;Database=GymAppCDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      ConnectionStrings__DefaultConnection: Server=database,1433;Database=GymAppCDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env};TrustServerCertificate=True
+      Jwt__Key: ${JWT_KEY:?Set JWT_KEY in .env}
+      AdminSeed__Name: ${ADMIN_SEED_NAME:-GymApp Admin}
+      AdminSeed__Email: ${ADMIN_SEED_EMAIL:?Set ADMIN_SEED_EMAIL in .env}
+      AdminSeed__Password: ${ADMIN_SEED_PASSWORD:?Set ADMIN_SEED_PASSWORD in .env}
     ports:
       - "5004:8080"
 
   frontend:
-  build:
-    context: ./frontend
-    dockerfile: Dockerfile
-    args:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        INTERNAL_API_URL: ${INTERNAL_API_URL}
+    container_name: gymapp_frontend
+    depends_on:
+      - backend
+    environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       INTERNAL_API_URL: ${INTERNAL_API_URL}
-  container_name: gymapp_frontend
-  depends_on:
-    - backend
-  environment:
-    NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-    INTERNAL_API_URL: ${INTERNAL_API_URL}
-  ports:
-    - "3000:3000"
+    ports:
+      - "3000:3000"
 
 volumes:
   sql_data:

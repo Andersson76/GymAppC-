@@ -1,6 +1,84 @@
-@GymAppC.Api_HostAddress = http://localhost:5079
+@host = http://localhost:5004
+@token = PASTE_JWT_FROM_LOGIN_RESPONSE_HERE
+@workoutId = 1
+@userEmail = demo.user@example.com
+@userPassword = DemoPassword123!
+@adminEmail = admin@example.com
+@adminPassword = ChangeMe_Admin_123!
 
-GET {{GymAppC.Api_HostAddress}}/weatherforecast/
+### API status
+GET {{host}}/
 Accept: application/json
 
-###
+### Register a User account
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Demo User",
+  "email": "{{userEmail}}",
+  "password": "{{userPassword}}"
+}
+
+### Login as registered User
+# Copy `token` from the response to the @token variable above.
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{userPassword}}"
+}
+
+### Login as seeded Admin
+# Keep these variables synchronized with ADMIN_SEED_EMAIL and ADMIN_SEED_PASSWORD.
+# To test the complete CRUD sequence including DELETE, paste this token above
+# before creating the workout so that the workout belongs to the Admin account.
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### Get current user
+GET {{host}}/api/user/me
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Create workout
+POST {{host}}/api/workouts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Strength session",
+  "date": "2026-08-16T18:00:00Z",
+  "notes": "Squat, bench press and rows"
+}
+
+### List current user's workouts
+GET {{host}}/api/workouts
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get workout by id
+GET {{host}}/api/workouts/{{workoutId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Update workout
+PUT {{host}}/api/workouts/{{workoutId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Updated strength session",
+  "date": "2026-08-16T18:30:00Z",
+  "notes": "Added deadlifts"
+}
+
+### Delete workout (Admin role required)
+DELETE {{host}}/api/workouts/{{workoutId}}
+Authorization: Bearer {{token}}

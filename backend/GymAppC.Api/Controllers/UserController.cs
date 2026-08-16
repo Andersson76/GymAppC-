@@ -1,27 +1,45 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using GymAppC.Application.Features.Users.Queries.GetCurrentUser;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
-namespace GymAppC.Api.Controllers
+namespace GymAppC.Api.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public sealed class UserController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UserController : ControllerBase
-    {
-        [HttpGet("me")]
-        public IActionResult GetMe()
-        {
-            var userId = User.FindFirst("id")?.Value;
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+    private readonly ISender _sender;
 
-            return Ok(new
-            {
-                id = userId,
-                email,
-                role
-            });
+    public UserController(ISender sender)
+    {
+        _sender = sender;
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
         }
+
+        var user = await _sender.Send(
+            new GetCurrentUserQuery(userId.Value),
+            cancellationToken);
+
+        return user is null ? NotFound() : Ok(user);
+    }
+
+    private int? GetUserId()
+    {
+        return int.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            out var userId)
+            ? userId
+            : null;
     }
 }
